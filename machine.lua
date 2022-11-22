@@ -277,7 +277,7 @@ minetest.register_node("piranesi:machine_gear_1_e", {
 				minetest.set_node(pos, {name = "piranesi:machine_gear_1"})
 			end
 			itemstack:take_item()
-			return itemstack
+			puncher:get_inventory():set_stack("main", puncher:get_wield_index(),itemstack)
 		end,
 })
 minetest.register_node("piranesi:machine_gear_1", {
@@ -301,7 +301,7 @@ minetest.register_node("piranesi:machine_gear_2_e", {
 				minetest.set_node(pos, {name = "piranesi:machine_gear_2"})
 			end
 			itemstack:take_item()
-			return itemstack
+			puncher:get_inventory():set_stack("main", puncher:get_wield_index(),itemstack)
 		end,
 })
 minetest.register_node("piranesi:machine_gear_2", {

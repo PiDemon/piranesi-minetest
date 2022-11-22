@@ -1,8 +1,8 @@
 piranesi = {}
 piranesi.storage = minetest.get_mod_storage()
 local path = minetest.get_modpath("piranesi")
-local rooms_to_visit_constant = {"parlor.mts","kitchen.mts","fire_poles.mts","prison.mts","diner.mts","observatory.mts","theater.mts","garden.mts","pool.mts","bathroom.mts","bedroom.mts","potion.mts"}
-local rooms_to_visit_length = 12
+local rooms_to_visit_constant = {"parlor.mts","kitchen.mts","fire_poles.mts","prison.mts","diner.mts","observatory.mts","theater.mts","garden.mts","pool.mts","bathroom.mts","bedroom.mts","potion.mts","library.mts"}
+local rooms_to_visit_length = 13
 local rooms_to_visit = rooms_to_visit_constant
 local debug = false
 piranesi.storage:set_string("moves","ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee") --e for empty, 20 moves stored
@@ -40,7 +40,7 @@ end
 
 local choose_room = function(moves)
 	if debug then
-		return "garden.mts"
+		return "forrest_maze.mts", "true"
 	end
 	--reset counter 
 	if rooms_to_visit_length == 0 then
@@ -49,11 +49,11 @@ local choose_room = function(moves)
 	end
 	--special rooms
 	local moves = piranesi.storage:get_string("moves")
-	--minetest.chat_send_all(moves:sub(27).." look here!")
+	----minetest.chat_send_all(moves:sub(27).." look here!")
 	if moves:sub(25) == "eezpeezmeezpeezm" or moves:sub(25) == "eexpeexmeexpeexm" then
 		return "forrest_maze.mts", "true"
 	elseif moves:sub(35) == "sseezp"  then
-		return "blocked.mts"
+		return "blocked.mts", ""
 	elseif moves:sub(27) == "zpeexpeezmeexm"  then
 		return "forge.mts", "true"
 	elseif moves:sub(27) == "zpeexmeezmeexp"  then
@@ -65,7 +65,9 @@ local choose_room = function(moves)
 	elseif moves:sub(27) == "tteezpeezpeezp" then
 		return "lake.mts", "true"
 	elseif moves:sub(27) == "tteezmeezmeezm" then
-		return "final_room.mts"
+		return "final_room.mts", ""
+	elseif moves:sub(27) == "tteexmeexmeexm" then
+		return "graveyard.mts", "true"
 	elseif moves:sub(21) == "eezpeexpeexmeezpeexp" then
 		return "candle_room.mts"
 	end
@@ -78,8 +80,8 @@ local choose_room = function(moves)
 		chosen_room = rooms_to_visit[rand]
 		table.remove(rooms_to_visit,rand)
 		rooms_to_visit_length = rooms_to_visit_length-1
-		minetest.chat_send_all(chosen_room)
-		return chosen_room
+		--minetest.chat_send_all(chosen_room)
+		return chosen_room, ""
 	end
 end
 
@@ -92,34 +94,38 @@ local place_room = function(file, pos)
 			-- pos.x=pos.x-20
 		-- end
 	-- end
+	if file == "graveyard.mts" then
+		pos.y=pos.y-22
+		minetest.place_schematic(pos, path .. "/schems/" .. "graveyard.mts")
+	end
 	
 	minetest.place_schematic(pos, path .. "/schems/" .. file)
 	
 	--...and after.
-	if file == "forest_maze.mts" then
-		pos.x=pos.x+35
-		pos.y=pos.y+1
-		pos.z=pos.z+10
-		minetest.set_node(pos, {name = "piranesi:shovelblock"})
-		pos.x=pos.x-35
-		pos.y=pos.y-1
-		pos.z=pos.z-10
+	-- if file == "forest_maze.mts" then
+		-- pos.x=pos.x+35
+		-- pos.y=pos.y+1
+		-- pos.z=pos.z+10
+		-- minetest.set_node(pos, {name = "piranesi:shovelblock"})
+		-- pos.x=pos.x-35
+		-- pos.y=pos.y-1
+		-- pos.z=pos.z-10
 		
-		pos.x=pos.x+16
-		pos.y=pos.y+1
-		pos.z=pos.z+26
-		minetest.set_node(pos, {name = "flowers:dandelion_white"})
-		pos.x=pos.x-16
-		pos.y=pos.y-1
-		pos.z=pos.z-26
-	end
+		-- pos.x=pos.x+16
+		-- pos.y=pos.y+1
+		-- pos.z=pos.z+26
+		-- minetest.set_node(pos, {name = "flowers:dandelion_white"})
+		-- pos.x=pos.x-16
+		-- pos.y=pos.y-1
+		-- pos.z=pos.z-26
+	-- end
 	if file == "garden.mts" then
 		pos.y=pos.y-1
 		minetest.place_schematic(pos, path .. "/schems/" .. "garden.mts")
 		pos.y=pos.y+1
 	end
 	--minetest.after(1,function(file,pos)
-		--minetest.chat_send_all("sdas")
+		----minetest.chat_send_all("sdas")
 		if file == "hall_z_plus.mts" or file == "hall_z_minus.mts" then
 			pos.y=pos.y+1
 			pos.z=pos.z+9
@@ -156,7 +162,14 @@ local place_room = function(file, pos)
 			pos.x=pos.x-9
 			pos.z=pos.z-3
 		end
+		if file == "final_room.mts" then
+			pos.y=pos.y-36
+			minetest.place_schematic(pos, path .. "/schems/" .. "final_room.mts")
+		end
+
 		if file == "final_room_2.mts" then
+			--pos.y=pos.y-36
+			--minetest.place_schematic(pos, path .. "/schems/" .. "final_room_2.mts")
 			pos.x=pos.x+9
 			pos.y=pos.y+5
 			pos.z=pos.z+9
@@ -193,9 +206,11 @@ local place_halls = function(pos,big)
 		--reset z
 		pos.z=pos.z+20
 	else
+		--minetest.chat_send_all(piranesi.storage:get_string("moves"))
 		if piranesi.storage:get_string("moves"):sub(39,40) == "zm" then
+			--minetest.chat_send_all("sada")
 			pos.z=pos.z-20
-		elseif piranesi.storage:get_string("moves"):sub(39,40) == "xm" then
+		elseif piranesi.storage:get_string("moves"):sub(39,40) == "xm" then		
 			pos.x=pos.x-20
 		end
 		pos.z=pos.z-20
@@ -238,6 +253,7 @@ minetest.register_node("piranesi:trigger_spacer", {
 	paramtype = "light",
 	walkable = false,
 	buildable_to = false,
+	pointable = false,
 	sunlight_propagates = true,
 	on_timer = function(pos)
 		local objs = minetest.get_objects_inside_radius(pos, 0.9)
@@ -246,7 +262,7 @@ minetest.register_node("piranesi:trigger_spacer", {
 				if piranesi.storage:get_string("moves"):sub(39,40) ~= "ee" then
 					piranesi.storage:set_string("moves",piranesi.storage:get_string("moves"):sub(3,40).."ee")
 				end
-				minetest.chat_send_all(minetest.serialize(piranesi.storage:get_string("moves")))
+				--minetest.chat_send_all(minetest.serialize(piranesi.storage:get_string("moves")))
 			end
 		end
 		return true
@@ -261,6 +277,7 @@ minetest.register_node("piranesi:trigger_z_plus", {
 	paramtype = "light",
 	walkable = false,
 	buildable_to = false,
+	pointable = false,
 	sunlight_propagates = true,
 	on_timer = function(pos)
 		local objs = minetest.get_objects_inside_radius(pos, 0.9)
@@ -282,7 +299,7 @@ minetest.register_node("piranesi:trigger_z_plus", {
 					place_halls(pos, big)
 					place_room(room, pos)
 				end
-				minetest.chat_send_all("HHIIII")
+				--minetest.chat_send_all("HHIIII")
 			end
 		end
 		return true
@@ -297,6 +314,7 @@ minetest.register_node("piranesi:trigger_z_minus", {
 	paramtype = "light",
 	walkable = false,
 	buildable_to = false,
+	pointable = false,
 	sunlight_propagates = true,
 	on_timer = function(pos)
 		local objs = minetest.get_objects_inside_radius(pos, 0.9)
@@ -317,7 +335,7 @@ minetest.register_node("piranesi:trigger_z_minus", {
 					pos.z=pos.z-40
 					place_halls(pos, big)
 					place_room(room, pos)
-					--minetest.chat_send_all("HHIIeII")
+					----minetest.chat_send_all("HHIIeII")
 				end
 			end
 		end
@@ -333,6 +351,7 @@ minetest.register_node("piranesi:trigger_x_plus", {
 	paramtype = "light",
 	walkable = false,
 	buildable_to = false,
+	pointable = false,
 	sunlight_propagates = true,
 	on_construct = function(pos)
 		local timer = minetest.get_node_timer(pos)
@@ -340,7 +359,7 @@ minetest.register_node("piranesi:trigger_x_plus", {
 	end,
 	on_timer = function(pos)
 		local objs = minetest.get_objects_inside_radius(pos, 0.9)
-		--minetest.chat_send_all("HHIIII")
+		----minetest.chat_send_all("HHIIII")
 		for _, obj in pairs(objs) do --just a precaution in case some other entity ends up wandering through hallways,
 			if obj:get_player_name() ~= "" then -- that makes sure only players trigger room changes.
 				--get to the corner of the room schematic-wise
@@ -375,13 +394,14 @@ minetest.register_node("piranesi:trigger_x_minus", {
 	walkable = false,
 	buildable_to = false,
 	sunlight_propagates = true,
+	pointable = false,
 	on_construct = function(pos)
 		local timer = minetest.get_node_timer(pos)
 		timer:start(0.1)
 	end,
 	on_timer = function(pos)
 		local objs = minetest.get_objects_inside_radius(pos, 0.9)
-		--minetest.chat_send_all("HHIIII")
+		----minetest.chat_send_all("HHIIII")
 		for _, obj in pairs(objs) do --just a precaution in case some other entity ends up wandering through hallways,
 			if obj:get_player_name() ~= "" then -- that makes sure only players trigger room changes.
 				piranesi.storage:set_string("moves",piranesi.storage:get_string("moves").."xm")
@@ -413,6 +433,7 @@ minetest.register_node("piranesi:end", {
 	drawtype = "airlike",
 	paramtype = "light",
 	walkable = false,
+	pointable = false,
 	buildable_to = false,
 	sunlight_propagates = true,
 	on_timer = function(pos)
@@ -430,7 +451,7 @@ end
 ----------------
 --collectables--
 ----------------
-local collectable_list = {"piranesi:axeblock","piranesi:shovelblock","piranesi:bottle_red_block","piranesi:bottle_green_block","piranesi:bottle_yellow_block","piranesi:bottle_blue_block","piranesi:crownblock",
+local collectable_list = {"piranesi:axeblock","piranesi:shovelblock","piranesi:bottle_red_block","piranesi:bottle_green_block","piranesi:bottle_yellow_block","piranesi:bottle_blue_block","piranesi:crownblock","piranesi:crownblock1","piranesi:crownblock2",
 "piranesi:swordblock", "piranesi:plateblock", "piranesi:keyblock_gold", "piranesi:keyblock_metal", 	"piranesi:dandelion_white","piranesi:geranium","piranesi:chrysanthemum_green","piranesi:dandelion_yellow","piranesi:rose",
 "piranesi:keyblock_black","piranesi:lighterblock","piranesi:empty"}
 minetest.register_abm({
@@ -446,7 +467,7 @@ minetest.register_abm({
 		for _, item in pairs(collectable_list) do 
 			if node.name == item then
 				if piranesi.storage:get_string(item) == "true" then
-					minetest.chat_send_all(piranesi.storage:get_string(item))
+					--minetest.chat_send_all(piranesi.storage:get_string(item))
 					minetest.set_node(pos, {name="air"})
 				end
 			end
@@ -785,7 +806,7 @@ minetest.register_node("piranesi:bowl_purple", {
 	on_construct = function(pos)
 		minetest.after(1, function(pos)
 			pos.y=pos.y+2
-			minetest.set_node(pos, {name = "piranesi:crown"})
+			minetest.set_node(pos, {name = "piranesi:crownblock1"})
 		end, pos)
 	end
 })
@@ -794,6 +815,8 @@ minetest.register_node("piranesi:bowl_black", {
 	tiles = {"bowl_black.png", "bowl_black.png", "bowl_side_black.png", "bowl_side_black.png", "bowl_side_black.png", "bowl_side_black.png"},
 	groups = {crumbly=1},
 	on_construct = function(pos)
+		player:get_inventory():add_item("main", "piranesi:coin_totem")
+		particle(player:get_pos())
 	end
 })
 ----------
@@ -834,6 +857,42 @@ minetest.register_node("piranesi:crown", {
 })
 minetest.register_node("piranesi:crownblock", {
 	description = "Crown Block",
+	tiles = {"empty.png", "empty.png", "crown_side.png", "crown_side.png", "crown_side.png", "crown_side.png"},
+	groups = {crumbly=1, hand=1},
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-7/16, -0.5, -7/16, -7/16, -3/16, 7/16},
+			{-7/16, -0.5, -7/16, 7/16, -3/16, -7/16},
+			{-7/16, -0.5, 7/16, -7/16, -3/16, 7/16},
+			{-7/16, -0.5, 7/16, 7/16, -3/16, -7/16},
+		},
+	},
+	drop = "piranesi:crown",
+	sunlight_propagates = true,
+	after_dig_node = remove_collectable
+})
+minetest.register_node("piranesi:crownblock1", {
+	description = "Crown Block 1",
+	tiles = {"empty.png", "empty.png", "crown_side.png", "crown_side.png", "crown_side.png", "crown_side.png"},
+	groups = {crumbly=1, hand=1},
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-7/16, -0.5, -7/16, -7/16, -3/16, 7/16},
+			{-7/16, -0.5, -7/16, 7/16, -3/16, -7/16},
+			{-7/16, -0.5, 7/16, -7/16, -3/16, 7/16},
+			{-7/16, -0.5, 7/16, 7/16, -3/16, -7/16},
+		},
+	},
+	drop = "piranesi:crown",
+	sunlight_propagates = true,
+	after_dig_node = remove_collectable
+})
+minetest.register_node("piranesi:crownblock2", {
+	description = "Crown Block 2",
 	tiles = {"empty.png", "empty.png", "crown_side.png", "crown_side.png", "crown_side.png", "crown_side.png"},
 	groups = {crumbly=1, hand=1},
 	drawtype = "nodebox",
@@ -909,7 +968,7 @@ while id < 8 do
 				if itemstack:get_name() == "piranesi:lighter" then
 					local number = minetest.get_node(pos).name:sub(22) --yeah, there are better ways to do this.
 					piranesi.storage:set_string("candles",piranesi.storage:get_string("candles"):sub(2,8)..number)
-					minetest.chat_send_all(piranesi.storage:get_string("candles")..number)
+					--minetest.chat_send_all(piranesi.storage:get_string("candles")..number)
 					if piranesi.storage:get_string("candles") == "12345678" then
 						--amulet--
 						player:get_inventory():add_item("main", "piranesi:neck_totem")
@@ -953,7 +1012,7 @@ minetest.register_node("piranesi:chess_totem", {
 						pos.x=pos.x-9
 						pos.y=pos.y-5
 						pos.z=pos.z-9
-						place_room("final_room_2.mts")
+						place_room("final_room_2.mts", pos)
 					end
 				end
 			end
@@ -1107,7 +1166,7 @@ minetest.register_node("piranesi:clock_button_input", {
 		},
 		on_punch = function(pos, node, puncher, pointed_thing)
 			piranesi.storage:set_string("clockcode",piranesi.storage:get_string("clockcode"):sub(2,5)..piranesi.storage:get_int("time"))
-			minetest.chat_send_all(piranesi.storage:get_string("clockcode"))
+			--minetest.chat_send_all(piranesi.storage:get_string("clockcode"))
 			if piranesi.storage:get_string("clockcode") == "11111" then
 				--watch--
 				player:get_inventory():add_item("main", "piranesi:time_totem")
@@ -1232,7 +1291,7 @@ minetest.register_on_newplayer(function(player)
 		local pos = {x=-8,y=-4,z=-10}
 		minetest.place_schematic(pos, path .. "/schems/outside.mts")
 		player:set_pos({x=0,y=0,z=0})
-		player:set_physics_override({speed = 1.5})
+		player:set_physics_override({speed = 1.6})
 		player:set_wielded_item("piranesi:compassnorth")
 		pos.x = pos.x+10
 		pos.z=pos.z+40
@@ -1241,7 +1300,7 @@ minetest.register_on_newplayer(function(player)
 	piranesi.storage:set_string("moves","ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ee".."ss")
 end)
 minetest.register_on_joinplayer(function(player)
-	player:set_physics_override({speed = 1.5})
+	player:set_physics_override({speed = 1.6})
 	player:hud_set_hotbar_itemcount(20)
 	player:set_inventory_formspec("size(5,5)")
 	player:hud_set_hotbar_image("hotbar.png")
